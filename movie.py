@@ -38,6 +38,7 @@ user = user_data.loc[user_data["userId"] == 1176642] #currently training for a p
 
 user_train , user_test = train_test_split(user , test_size = .2)
 user_train = user_train.sort_values("movieId")
+user_test = user_test.sort_values("movieId")
 
 movie_feature , missing_movies= get_movie_feature(user_train)
 
@@ -47,14 +48,15 @@ ratings = []
 
 for i in user_train["movieId"]:
 	if i not in missing_movies:
-		ratings.append(user_train["rating"])
+		ratings.append(user_train.loc[user_train["movieId"] == i]["rating"])
 
 test_feature = get_movie_feature(user_test)[0]
 
 linear = linear_model.LinearRegression()
-print len(movie_feature) , len(ratings),len(user_train)
 
-linear.fit(np.array(movie_feature) , ratings)
+linear.fit(movie_feature ,ratings)
+
+print user_train
 
 print linear.predict(test_feature)
 
