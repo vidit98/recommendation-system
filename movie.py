@@ -34,7 +34,7 @@ def get_movie_feature(user):
 input_file1 = "training.csv"
 user_data = pd.read_csv(input_file1)
 
-user = user_data.loc[user_data["userId"] == 1176642] #currently training for a particular user
+user = user_data.loc[user_data["userId"] == 14909330] #currently training for a particular user
 
 user_train , user_test = train_test_split(user , test_size = .2)
 user_train = user_train.sort_values("movieId")
@@ -54,9 +54,11 @@ test_feature = get_movie_feature(user_test)[0]
 
 linear = linear_model.LinearRegression()
 
-linear.fit(movie_feature ,ratings)
 
-print user_train
+print len(movie_feature) , len(ratings)
+linear.fit(movie_feature ,ratings)
+#print str("hye i am here")
+#print user_train
 
 print linear.predict(test_feature)
 
