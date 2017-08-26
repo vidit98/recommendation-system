@@ -40,6 +40,7 @@ user = user_data.loc[user_data["userId"] == 14909330] #currently training for a 
 
 print len(user)
 
+
 user_train , user_test = train_test_split(user , test_size = .2)
 user_train = user_train.sort_values("movieId")
 user_test = user_test.sort_values("movieId")
@@ -62,6 +63,14 @@ linear = LinearRegression()
 linear.fit(train_feature ,ratings)
 print user_train
 print user_test
+
+linear = linear_model.LinearRegression()
+
+
+print len(movie_feature) , len(ratings)
+linear.fit(movie_feature ,ratings)
+#print str("hye i am here")
+#print user_train
 
 print linear.predict(test_feature)
 

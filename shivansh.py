@@ -3,7 +3,9 @@ import numpy as np
 from collections import OrderedDict
 #from sklearn.model_selection import train_test_split
 
-test_user_id = 10917565
+
+test_user_id = 11681723
+
 movies_df = pd.read_csv("movies.csv")
 movies_train = pd.read_csv("training.csv")
 
@@ -39,6 +41,7 @@ user_preferences['Thriller'] = 2
 user_preferences['Western'] =1 
 
 
+
 def roundoff(value):
 	i = int(value)
 	f = value - i
@@ -48,6 +51,7 @@ def roundoff(value):
 		return (i+.5)
 	if( f >= .75 and f <= .99999):
 		return i+1		
+
 
 #in production you would use np.dot instead of writing your own dot product function.
 def dot_product(vector_1, vector_2):  
@@ -68,6 +72,7 @@ def get_movie_score(movie_features, user_preferences):
 
 def get_movie_recommendations(user_preferences, n_recommendations):  
     #we add a column to the movies_df dataset with the calculated score for each movie for the given user
+
 	movies_df['score'] = movies_df[movie_categories].apply(get_movie_score, args=([user_preferences]), axis=1)
 	error = 0
 	count =0 
@@ -80,14 +85,17 @@ def get_movie_recommendations(user_preferences, n_recommendations):
 	print "errr",error/(count*5)	
 	return movies_df.sort_values(by=['score'], ascending=False)['title'][:n_recommendations]
 
+
 #print get_movie_recommendations(user_preferences, 10)  
 
 
 
 def user_based_movie_recommendations(userid_given):
+
 	#user_preferences = OrderedDict(zip(movie_categories, []))
 	
 	user_preferences = np.zeros(20)
+
 
 
 	# user_preferences['Action'] = 5  
