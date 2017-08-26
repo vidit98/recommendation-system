@@ -1,7 +1,9 @@
+import movie_feature
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn import linear_model
+from sklearn.linear_model import Ridge, LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 
 def get_movie_feature(user):
 	"""
@@ -16,7 +18,7 @@ def get_movie_feature(user):
 		feature = feature + i.split("|")
 	dist_feature = set(feature)	
 	dist_feature = list(dist_feature)
-	
+	dist_feature.pop(14)
 	feature_vector = [] #20 x no of movies user rated
 	missing_movies = set(user["movieId"]).difference(genres_data["movieId"])
 	
@@ -34,14 +36,17 @@ def get_movie_feature(user):
 input_file1 = "training.csv"
 user_data = pd.read_csv(input_file1)
 
-user = user_data.loc[user_data["userId"] == 1176642] #currently training for a particular user
+user = user_data.loc[user_data["userId"] == 14909330] #currently training for a particular user
+
+print len(user)
 
 user_train , user_test = train_test_split(user , test_size = .2)
 user_train = user_train.sort_values("movieId")
 user_test = user_test.sort_values("movieId")
 
-movie_feature , missing_movies= get_movie_feature(user_train)
+train_feature , missing_movies= get_movie_feature(user_train)
 
+train_feature = np.dot(train_feature , movie_feature.weights())
 
 ratings = []
 
@@ -52,11 +57,11 @@ for i in user_train["movieId"]:
 
 test_feature = get_movie_feature(user_test)[0]
 
-linear = linear_model.LinearRegression()
+linear = LinearRegression()
 
-linear.fit(movie_feature ,ratings)
-
+linear.fit(train_feature ,ratings)
 print user_train
+print user_test
 
 print linear.predict(test_feature)
 
