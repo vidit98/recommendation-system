@@ -9,6 +9,29 @@ movies_df = pd.concat([movies_df, movies_df.genres.str.get_dummies(sep='|')], ax
 movie_categories = movies_df.columns[4:]
 test_movies_id = []
 test_movies=[]
+popular= pd.read_csv("popular.csv")
+popular = popular.head(n=20)
+#print popular.shape
+"""def add_count():
+	for i in movies_df["movieId"]:
+		print i, type(i)
+		if(i in list(movies_train["movieId"].values)):
+			movies_df.loc["movieId" == int(i)]["count"] = len(movies_train.loc[movies_train["movieId"] == i])
+
+	
+	movies_df1 = movies_df.copy()
+	movies_df1["count"] = 0
+
+	for index, row in movies_df1.iterrows():
+		movie_id_temp = row["movieId"]
+		movies_df1.ix[index, "count" ] = len(movies_train.loc[movies_train["movieId"] == movie_id_temp])
+
+	res = movies_df1.sort_values('count', ascending=False)	
+	res.to_csv("popular.csv")
+
+#print movies_df["count"]
+"""
+
 
 def remove_no_genre():
 
@@ -37,7 +60,6 @@ def extract_2015():
 
 
 def roundoff(value):
-	i = int(value)
 	f = value - i
 	if(f >=0 and f <= .25):
 		return i
@@ -91,7 +113,8 @@ def get_movie_recommendations(user_preferences, n_recommendations,s):
 		#test_movies1.loc[test_movies1["movieId"] == int(row["movieId"])].loc[1, 21]= roundoff(abs(float((5.0-s)*row["score"] + s)))
 
 	result = test_movies1.sort_values('score')
-	return np.array(result.tail()[['movieId', 'title','score']])
+	#return np.array(result[['movieId', 'title','score']])
+	return result
 
 
 def user_based_movie_recommendations(userid_given, missing_movies):
@@ -154,6 +177,7 @@ def user_based_movie_recommendations(userid_given, missing_movies):
 	
 missing_movies = remove_no_genre()
 extract_2015()
+#add_count()
 
 ofile  = open('result.csv', "w")
 writer = csv.writer(ofile)
@@ -177,6 +201,21 @@ with open("test.csv") as f:
 
 		try:
 			movies, s =  user_based_movie_recommendations(int(user_id[0]), missing_movies)
+			movies["val"] = 0
+
+			for index, row in movies.iterrows():
+
+				score = row["score"]
+				row = np.array(row)[4:-2]
+				val = 0
+				for index2, row2 in popular.iterrows():
+					row2 = np.array(row2)[4:-1]
+					val += dot_product(row, row2)*score
+
+				movies.ix[index, "val"] = val 
+
+			res = np.array(movies.sort_values("val").tail())
+
 		except ZeroDivisionError:
 			for i in range(5):
 				rating = 2.5
@@ -185,11 +224,37 @@ with open("test.csv") as f:
 			continue
 
 
-		for i in range(len(movies)):
-			rating = roundoff(abs(float((5.0-s)*movies[i, 2] + s)))
-			ans =[ user_id[0] , movies[i, 0], rating ]
+		for i in range(len(res)):
+			rating = roundoff(abs(float((5.0-s)*res[i,-2] + s)))
+			ans =[ user_id[0] , res[i, 0], rating ]
 			writer.writerow(ans)
 
 f.close()
 ofile.close()			
- 
+
+#movies, s = user_based_movie_recommendations(int(user_id[0]), missing_movies)
+
+#movies_watch = np.zeros(len(movies_df))
+
+"""movies, s =  user_based_movie_recommendations(10815242, missing_movies)
+movies["val"] = 0
+
+for index, row in movies.iterrows():
+
+	score = row["score"]
+	row = np.array(row)[4:-2]
+	val = 0
+	for index2, row2 in popular.iterrows():
+		row2 = np.array(row2)[4:-1]
+		val += dot_product(row, row2)*score
+
+	movies.ix[index, "val"] = val 
+
+res = movies.sort_values("val").tail()
+
+
+#print res[:,["movieId", "title","score"]]
+"""
+
+
+
