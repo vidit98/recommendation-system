@@ -10,7 +10,8 @@ movie_categories = movies_df.columns[4:]
 test_movies_id = []
 test_movies=[]
 popular= pd.read_csv("popular.csv")
-popular = popular.head(n=350)
+del popular["a"]
+#popular = popular.head(n=350)
 #print popular.shape
 """def add_count():
 	for i in movies_df["movieId"]:
@@ -31,6 +32,14 @@ popular = popular.head(n=350)
 
 #print movies_df["count"]
 """
+def find_year(array):
+
+	idx = array[1].find(")" , len(array[1]) - 6)
+	try:
+		y = array[1][idx-4:idx]
+		return int(y)
+	except:
+		return 0	
 
 
 def remove_no_genre():
@@ -88,18 +97,22 @@ def get_movie_score(movie_features, user_preferences):
 
 
 
-def get_movie_recommendations(user_preferences, m_seen):  
+def get_movie_recommendations(user_preferences, m_seen , avg,var):  
     #we add a column to the movies_df dataset with the calculated score for each movie for the given user
 	#movies_df1 = movies_df.copy()
 	#test_movies1 = pd.DataFrame(data = test_movies, columns = movies_df.columns)
 	#test_categories = test_movies1.columns[4:]
-
+	start = int(round(avg) - np.ceil(var))
+	end = int(round(avg) + np.ceil(var))
 	#test_movies1['score'] = test_movies1[test_categories].apply(get_movie_score, args=([user_preferences]), axis=1)
-	popular1 = popular.copy()
-	popular_categories = popular1.columns[4:]
-	popular1['score'] = popular1[popular_categories].apply(get_movie_score, args=([user_preferences]), axis=1)
-
 	
+	popular1 = popular.copy()
+	#popular_categories = popular1.columns[4:]
+	#popular1['score'] = popular1[popular_categories].apply(get_movie_score, args=([user_preferences]), axis=1)
+
+	popular2 = (popular1.head(n =1000)).copy()
+	popular_categories2 = popular2.columns[4:]
+	popular2['score'] = popular2[popular_categories2].apply(get_movie_score, args=([user_preferences]), axis=1)
 	#print 5*(movies_df.sort_values(by=['score'], ascending=False)['score'][:n_recommendations])
 	#for i in test_movies1["movieId"]:
 		#if i in list(user_test["movieId"]):
@@ -117,12 +130,16 @@ def get_movie_recommendations(user_preferences, m_seen):
 		#test_movies1.loc[test_movies1["movieId"] == int(row["movieId"])].loc[1, 21]= roundoff(abs(float((5.0-s)*row["score"] + s)))
 
 	#result = test_movies1.sort_values('score')
-	result = popular1.sort_values('score', ascending=False)
+
+	result = popular2.sort_values('score', ascending=False)
+	#print result
 
 	c = 1
 
 	for index, row in result.iterrows():
-		if(row["movieId"] in m_seen):
+		#print row
+		y = find_year(np.array(row))
+		if((row["movieId"] in m_seen) or (y not in range(start,end+1))):
 			 result.drop(index, inplace=True)
 		else:
 			c += 1
@@ -130,9 +147,33 @@ def get_movie_recommendations(user_preferences, m_seen):
 		if c == 6:
 			break					 
 
-	result = result.head()		
+	if c == 6:
+		#print "if"
+		result = result.head()
+		return np.array(result[['movieId', 'title','score']])	
+	else:
 
-	return np.array(result[['movieId', 'title','score']])
+		no = c
+		popular1 = popular1.tail(len(popular1) - 1000)
+
+		for index, row in popular1.iterrows():
+			y = find_year(np.array(row))
+			if((row["movieId"] in m_seen) or (y not in range(start,end+1))):
+				 popular1.drop(index, inplace=True)
+			else:
+				c += 1
+
+			if c == 6:
+				#print "else"
+				break					 
+
+		add = popular1.head(n=6-no).copy()
+		add_categories = add.columns[4:]
+		add['score'] = add[add_categories].apply(get_movie_score, args=([user_preferences]), axis=1)
+		result = result.append(add)
+	#print add
+	return np.array(result[['movieId', 'title','score']])			
+	#return np.array(result[['movieId', 'title','score']])
 	#return result
 
 
@@ -147,15 +188,17 @@ def user_based_movie_recommendations(userid_given, missing_movies):
 	s = user_data_temp["rating"].sum()
 
 	s = s/len(user_data_temp["rating"])
-
+	year = []
 	for index, row in user_data_temp.iterrows():
 		movie_id_temp = row["movieId"]
+
 		#if(movies_df.loc["movieId" == movie_id_temp]["genres"]):
 		if(movie_id_temp not in missing_movies):
 			feature1=[]
 			
 			feature1 = np.array(movies_df.loc[movies_df["movieId"] == movie_id_temp]).ravel()
-		
+			y = find_year(feature1)
+			year.append(y)
 			feature1 = feature1[4:]
 		
 			#s = np.sum(feature1)
@@ -191,16 +234,18 @@ def user_based_movie_recommendations(userid_given, missing_movies):
 
 	#print user_preferences
 	#print user_test
-	return get_movie_recommendations(user_preferences, movies_seen), s
+	avg = np.mean(year)
+	var= np.var(year)
+	return get_movie_recommendations(user_preferences, movies_seen , avg , np.sqrt(var)), s
 
 
 
 	
 missing_movies = remove_no_genre()
-extract_2015()
+#extract_2015()
 #add_count()
 
-ofile  = open('result.csv', "w")
+ofile  = open('result1.csv', "w")
 writer = csv.writer(ofile)
 
 movies_df1 = movies_df.copy()
